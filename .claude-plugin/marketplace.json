@@ -1,0 +1,21 @@
+{
+  "name": "aside",
+  "owner": {
+    "name": "aside contributors"
+  },
+  "metadata": {
+    "description": "Run OpenAI Codex in a visible tmux pane for code review and task delegation.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "aside",
+      "description": "Run OpenAI Codex in a visible tmux pane for code review and task delegation.",
+      "version": "0.1.0",
+      "author": {
+        "name": "aside contributors"
+      },
+      "source": "."
+    }
+  ]
+}
