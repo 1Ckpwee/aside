@@ -59,7 +59,7 @@ run_in_pane() {
 
   if ! check_tmux; then
     echo "aside: not inside tmux — running Codex inline." >&2
-    eval "$codex_cmd"
+    eval "$codex_cmd" >&2
     local rc=$?
     echo "$rc" > "${job_dir}/exit_code"
     echo "done" > "${job_dir}/status"
