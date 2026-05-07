@@ -5,9 +5,9 @@ import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { isPermissionsBypassed } from "./lib/detect-mode.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const PLUGIN_ROOT = path.resolve(SCRIPT_DIR, "..");
 const CONFIG_DIR = path.join(process.env.HOME || "", ".aside");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 
@@ -49,7 +49,14 @@ function main() {
   const input = readHookInput();
   const config = readConfig();
 
-  if (!config.stopReviewGate) {
+  if (config.stopReviewGate === false) {
+    return;
+  }
+
+  if (!isPermissionsBypassed()) {
+    process.stdout.write(
+      `[aside] Claude is about to stop. Run /aside:review --uncommitted to review changes before finishing.\n`
+    );
     return;
   }
 

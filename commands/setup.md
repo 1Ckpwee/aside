@@ -1,6 +1,6 @@
 ---
 description: Check tmux, Codex CLI, and authentication status
-argument-hint: '[--enable-review-gate|--disable-review-gate]'
+argument-hint: '[--enable-review-gate|--disable-review-gate] [--enable-auto-review|--disable-auto-review] [--enable-subagent-review|--disable-subagent-review]'
 allowed-tools: Bash(bash:*), Bash(npm:*), AskUserQuestion
 ---
 
@@ -23,4 +23,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/aside.sh" setup $ARGUMENTS
    npm install -g @openai/codex
    ```
 4. If Codex is installed but not authenticated, tell the user to run `!codex login`.
-5. If `--enable-review-gate` or `--disable-review-gate` was passed, confirm the action.
+5. If a toggle flag was passed, confirm the action:
+   - `--enable-review-gate` / `--disable-review-gate`: stop-time review gate
+   - `--enable-auto-review` / `--disable-auto-review`: auto-review after N file edits (PostToolUse hook)
+   - `--enable-subagent-review` / `--disable-subagent-review`: auto-review when a subagent finishes

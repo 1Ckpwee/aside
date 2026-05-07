@@ -17,24 +17,21 @@ die() { echo "aside: $*" >&2; exit 1; }
 read_config_key() {
   local key="$1"
   if [ -f "$ASIDE_CONFIG_FILE" ]; then
-    # Minimal JSON key reader — no jq dependency
-    sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\(.*\)/\1/p" "$ASIDE_CONFIG_FILE" | sed 's/[",]//g' | head -1
+    node -e "const c=JSON.parse(require('fs').readFileSync('${ASIDE_CONFIG_FILE}','utf8'));process.stdout.write(String(c['${key}']??''))"
   fi
 }
 
 write_config_key() {
   local key="$1" value="$2"
   mkdir -p "$ASIDE_CONFIG_DIR"
-  if [ -f "$ASIDE_CONFIG_FILE" ]; then
-    # Update existing key or add new one
-    if grep -q "\"${key}\"" "$ASIDE_CONFIG_FILE" 2>/dev/null; then
-      sed -i '' "s/\"${key}\"[[:space:]]*:[[:space:]]*.*/\"${key}\": ${value},/" "$ASIDE_CONFIG_FILE"
-    else
-      sed -i '' "s/^{/{ \"${key}\": ${value},/" "$ASIDE_CONFIG_FILE"
-    fi
-  else
-    echo "{ \"${key}\": ${value} }" > "$ASIDE_CONFIG_FILE"
-  fi
+  node -e "
+    const fs=require('fs');
+    const f='${ASIDE_CONFIG_FILE}';
+    let c={};
+    try{c=JSON.parse(fs.readFileSync(f,'utf8'))}catch{}
+    c['${key}']=${value};
+    fs.writeFileSync(f,JSON.stringify(c,null,2)+'\n');
+  "
 }
 
 make_job_dir() {
@@ -100,11 +97,17 @@ run_in_pane() {
 
 cmd_setup() {
   local enable_gate="" disable_gate=""
+  local enable_auto="" disable_auto=""
+  local enable_subagent="" disable_subagent=""
 
   while [ $# -gt 0 ]; do
     case "$1" in
-      --enable-review-gate)  enable_gate=1; shift ;;
-      --disable-review-gate) disable_gate=1; shift ;;
+      --enable-review-gate)    enable_gate=1; shift ;;
+      --disable-review-gate)   disable_gate=1; shift ;;
+      --enable-auto-review)    enable_auto=1; shift ;;
+      --disable-auto-review)   disable_auto=1; shift ;;
+      --enable-subagent-review)  enable_subagent=1; shift ;;
+      --disable-subagent-review) disable_subagent=1; shift ;;
       *) shift ;;
     esac
   done
@@ -115,6 +118,22 @@ cmd_setup() {
   elif [ -n "$disable_gate" ]; then
     write_config_key "stopReviewGate" "false"
     echo "Review gate disabled."
+  fi
+
+  if [ -n "$enable_auto" ]; then
+    write_config_key "autoReview" "true"
+    echo "Auto-review enabled (triggers after ${ASIDE_REVIEW_THRESHOLD:-5} edits)."
+  elif [ -n "$disable_auto" ]; then
+    write_config_key "autoReview" "false"
+    echo "Auto-review disabled."
+  fi
+
+  if [ -n "$enable_subagent" ]; then
+    write_config_key "subagentReview" "true"
+    echo "Subagent review enabled."
+  elif [ -n "$disable_subagent" ]; then
+    write_config_key "subagentReview" "false"
+    echo "Subagent review disabled."
   fi
 
   print_setup_report
@@ -252,6 +271,8 @@ aside — Run Codex in a visible tmux pane
 
 Usage:
   aside.sh setup [--enable-review-gate|--disable-review-gate]
+                 [--enable-auto-review|--disable-auto-review]
+                 [--enable-subagent-review|--disable-subagent-review]
   aside.sh review [--base <ref>] [--uncommitted] [-m <model>]
   aside.sh task [--write] [-m <model>] <prompt>
   aside.sh stop-review [cwd] [claude_message]

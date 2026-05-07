@@ -1,5 +1,5 @@
 {
-  "description": "Optional stop-time review gate via Codex in a tmux pane.",
+  "description": "Automated Codex review gates for Claude Code: stop-time, post-edit, subagent, and notification hooks.",
   "hooks": {
     "Stop": [
       {
@@ -7,6 +7,39 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/stop-hook.mjs\"",
+            "timeout": 900
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/post-tool-hook.mjs\"",
+            "timeout": 900
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/subagent-stop-hook.mjs\"",
+            "timeout": 900
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/notification-hook.mjs\"",
             "timeout": 900
           }
         ]

@@ -102,16 +102,56 @@ export ASIDE_LAYOUT=right    # 50% width right pane
 export ASIDE_TIMEOUT=900     # default — 15 minutes max
 ```
 
-### Review gate
+### Automation hooks
 
-When enabled, aside automatically runs a Codex review of Claude's code changes before Claude stops. If Codex finds issues, Claude is blocked from stopping and must address them first.
+aside automatically triggers Codex reviews at different points during a Claude Code session. All hooks are **enabled by default** — no setup needed. Use `/aside:setup --disable-*` to turn off individual hooks.
+
+#### Two modes based on permission state
+
+aside detects how Claude Code was launched and adjusts behavior accordingly:
+
+| Mode | When | Behavior |
+|---|---|---|
+| **Auto** | `--dangerously-skip-permissions` | Codex runs automatically. Stop hook can block Claude. No human action needed. |
+| **Approve** | Normal (interactive) | Hooks output suggestions. Claude must call `/aside:review` explicitly, which goes through the normal permission prompt. |
+
+Override with `ASIDE_MODE=auto` or `ASIDE_MODE=approve` environment variable.
+
+#### Review gate (Stop hook)
+
+Runs a Codex review before Claude stops. If Codex returns `BLOCK:`, Claude must fix the issues first.
 
 ```bash
 /aside:setup --enable-review-gate
 /aside:setup --disable-review-gate
 ```
 
-> **Warning:** The review gate creates a Claude → Codex feedback loop that may consume usage limits quickly. Only enable when actively monitoring.
+#### Auto-review (PostToolUse hook)
+
+Automatically triggers a Codex review after every N file edits (default: 5). Tracks Edit, Write, and NotebookEdit tool calls. Includes a cooldown (default: 120s) to avoid excessive reviews.
+
+```bash
+/aside:setup --enable-auto-review
+/aside:setup --disable-auto-review
+```
+
+Configure thresholds via environment variables:
+
+```bash
+export ASIDE_REVIEW_THRESHOLD=5    # trigger after this many edits
+export ASIDE_REVIEW_COOLDOWN=120   # minimum seconds between reviews
+```
+
+#### Subagent review (SubagentStop hook)
+
+Automatically runs a Codex review whenever a Claude Code subagent finishes its work.
+
+```bash
+/aside:setup --enable-subagent-review
+/aside:setup --disable-subagent-review
+```
+
+> **Warning:** Automation hooks create Claude → Codex feedback loops that may consume usage limits quickly. Only enable when actively monitoring.
 
 ## How it works
 
